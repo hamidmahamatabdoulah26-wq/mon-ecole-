@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon école</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0a0820;--bg2:#15123a;--card:#1b1850;--line:#2f4fd8;--blue:#3b66e8;--mut:#aeb4e0}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:env(safe-area-inset-top,0) 0 96px;line-height:1.4}
+header{background:linear-gradient(#17235c,#1f3070);padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:2px solid var(--blue)}
+.logo{background:#fff;color:var(--blue);font-weight:800;font-size:20px;padding:8px 14px;border-radius:14px}
+header small{margin-left:auto;color:var(--mut);text-align:right}
+header button{background:none;border:0;color:var(--mut);font:inherit;font-size:12px;text-decoration:underline}
+main{padding:16px;max-width:640px;margin:auto}
+section{display:none}section.on{display:block}
+h1{font-size:30px;line-height:1.15;font-weight:800;text-align:center;margin:22px 0 10px}
+h2{font-size:22px;font-weight:800;margin:6px 0 14px}
+.sub{color:var(--mut);text-align:center;margin-bottom:18px}
+.series{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.s{border:2px solid #2a3a8f;border-radius:20px;padding:14px;background:#120f33}
+.s.act{background:linear-gradient(135deg,#3b66e8,#25388f);border-color:#9fc0ff}
+.s b{font-size:20px;display:block}.s span{color:var(--mut);font-size:14px}
+.tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px}
+.chip{flex:none;border:1px solid #2a3a8f;background:var(--bg2);color:#fff;border-radius:999px;padding:9px 16px;font:inherit;font-size:14px}
+.chip.on{background:var(--blue);border-color:var(--blue)}
+.item{display:flex;gap:12px;background:var(--card);border:2px solid var(--line);border-radius:22px;padding:10px;margin-bottom:12px}
+.th{flex:none;width:96px;min-height:120px;border-radius:16px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;font-weight:800;font-size:14px;line-height:1.1;background:linear-gradient(#3b66e8,#1f3a9c) center/cover}
+.th small{font-weight:600;font-size:10px;opacity:.85}
+.item h3{font-size:17px;line-height:1.2;margin-bottom:4px}
+.item p,.meta{color:var(--mut);font-size:13px}
+.meta{margin:6px 0}
+.btn{display:block;width:100%;border:0;border-radius:16px;background:var(--blue);color:#fff;font:inherit;font-weight:800;padding:13px;margin-top:8px;text-align:center;text-decoration:none}
+.btn.alt{background:#1b2466;border:1px solid #2a3a8f;font-weight:600}
+.box{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;margin-bottom:12px}
+.badge{display:inline-block;background:#c0356b;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;margin-bottom:6px}
+.badge.ok{background:#1f9d78}
+input{width:100%;background:#0e0c2b;border:1px solid #2a3a8f;border-radius:14px;color:#fff;font:inherit;padding:13px;margin-bottom:10px}
+.msg{margin-top:10px;font-size:14px;color:#ffc83d}
+.empty{color:var(--mut);text-align:center;padding:30px 10px}
+nav{position:fixed;left:0;right:0;bottom:0;background:#100e30;border-top:2px solid var(--blue);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;background:none;border:0;color:var(--mut);font:inherit;font-size:11px;padding:6px 2px;display:grid;gap:2px;justify-items:center}
+nav button span{font-size:20px}nav button.on{color:#fff}
+</style>
+</head>
+<body>
+<header><div class="logo">Mon école</div><small id="who"></small></header>
+<main>
+
+<section id="accueil" class="on">
+<div class="series"><div class="s act"><b>Série A4</b><span>Lettres</span></div><div class="s"><b>Série D</b><span>Bientôt</span></div></div>
+<h1>Prépare ton Bac A4 avec des cours qui te parlent</h1>
+<p class="sub">Des vidéos simples, des méthodes pas à pas et des sujets corrigés. À ton rythme.</p>
+<div id="authbox" class="box">
+  <div class="tabs"><button class="chip on" id="tlogin">Connexion</button><button class="chip" id="tsignup">Créer un compte</button></div>
+  <input id="fname" placeholder="Nom complet" autocomplete="name" hidden>
+  <input id="email" type="email" placeholder="Email" autocomplete="email">
+  <input id="pwd" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password">
+  <button class="btn" id="go">Se connecter</button>
+  <div class="msg" id="amsg"></div>
+</div>
+<div id="welcome" class="box" hidden><h3 id="wname"></h3><p class="meta">Tu es connecté. Choisis une rubrique en bas.</p></div>
+</section>
+
+<section id="cours"><h2>Cours essentiels</h2><div class="tabs" id="subj"></div><div id="l-cours"></div></section>
+
+<section id="biblio"><h2>Bibliothèque</h2>
+<div class="tabs"><button class="chip on" data-b="oeuvre">Œuvres complètes</button><button class="chip" data-b="resume">Résumés et cours</button></div>
+<div id="l-oeuvre"></div><div id="l-resume" hidden></div></section>
+
+<section id="lives"><h2>Lives</h2><div id="l-live"></div></section>
+<section id="examens"><h2>Bacs blancs</h2><div id="l-examen"></div></section>
+
+<section id="resultats"><h2>Résultats</h2>
+<div class="box">
+<p class="meta">Entre ton nom et ton matricule. Tu ne verras que ton résultat.</p>
+<input id="rnom" placeholder="Nom complet" autocomplete="off">
+<input id="rmat" placeholder="Numéro de matricule" autocomplete="off">
+<button class="btn" id="rgo">Chercher mon résultat</button>
+<div id="rres"></div>
+</div></section>
+
+</main>
+<nav>
+<button class="on" data-go="accueil"><span>🏠</span>Accueil</button>
+<button data-go="cours"><span>🎓</span>Cours</button>
+<button data-go="biblio"><span>📚</span>Biblio</button>
+<button data-go="lives"><span>🔴</span>Lives</button>
+<button data-go="examens"><span>📝</span>Bacs blancs</button>
+<button data-go="resultats"><span>🏆</span>Résultats</button>
+</nav>
+<script>
+var SB=supabase.createClient('https://ypnphytmszdnojcueayn.supabase.co','sb_publishable_IGnJBI14Af2HCKv3n-3chA_6omaX4Fi');
+var $=function(i){return document.getElementById(i)};
+var user=null,profile=null,items=[],mode='login',subject='all';
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+function go(id){
+  if(!user&&id!=='accueil'&&id!=='resultats'){id='accueil';$('amsg').textContent='Connecte-toi pour voir le contenu.'}
+  document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===id)});
+  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.go===id)});
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){go(b.dataset.go)}});
+
+function setMode(m){mode=m;$('tlogin').classList.toggle('on',m==='login');$('tsignup').classList.toggle('on',m==='signup');
+  $('fname').hidden=m==='login';$('go').textContent=m==='login'?'Se connecter':'Créer mon compte';$('amsg').textContent=''}
+$('tlogin').onclick=function(){setMode('login')};$('tsignup').onclick=function(){setMode('signup')};
+
+$('go').onclick=async function(){
+  var e=$('email').value.trim(),p=$('pwd').value,n=$('fname').value.trim(),r;
+  $('amsg').textContent='Patiente…';
+  if(mode==='signup'){
+    if(!n){$('amsg').textContent='Entre ton nom complet.';return}
+    r=await SB.auth.signUp({email:e,password:p,options:{data:{full_name:n}}});
+    if(!r.error&&!r.data.session){$('amsg').textContent='Compte créé. Vérifie ton email pour confirmer, puis connecte-toi.';return}
+  }else{r=await SB.auth.signInWithPassword({email:e,password:p})}
+  if(r.error){$('amsg').textContent='Erreur : '+r.error.message}else{$('amsg').textContent=''}
+};
+
+async function refresh(){
+  var s=(await SB.auth.getSession()).data.session;
+  user=s?s.user:null;profile=null;
+  if(user){var r=await SB.from('profiles').select('*').eq('id',user.id).single();profile=r.data}
+  $('authbox').hidden=!!user;$('welcome').hidden=!user;
+  $('who').innerHTML=user?esc(profile&&profile.full_name||user.email)+'<br><button id="out">Déconnexion</button>':'Bac A4';
+  if(user){$('wname').textContent='Bienvenue '+(profile&&profile.full_name||'')+(profile&&profile.role==='admin'?' (admin)':'');
+    $('out').onclick=function(){SB.auth.signOut()};await load()}
+}
+SB.auth.onAuthStateChange(function(){refresh()});
+
+async function load(){
+  var r=await SB.from('contents').select('*').eq('serie','A4').order('position').order('created_at');
+  items=r.data||[];draw();
+}
+function card(c){
+  var d=c.starts_at?new Date(c.starts_at).toLocaleString('fr-FR',{dateStyle:'full',timeStyle:'short'}):'';
+  var th=c.thumbnail_url?'style="background-image:url(\''+esc(c.thumbnail_url)+'\')"':'';
+  var m=[c.duration_min?c.duration_min+' min':'',d].filter(Boolean).join(' · ');
+  return '<article class="item"><div class="th" '+th+'><small>'+esc(c.subject||'A4')+'</small></div><div style="min-width:0"><span class="badge '+(c.is_free?'ok':'')+'">'+(c.is_free?'Gratuit':'Payant')+'</span><h3>'+esc(c.title)+'</h3><p>'+esc(c.description)+'</p>'+(m?'<div class="meta">'+esc(m)+'</div>':'')+(c.file_url?'<a class="btn alt" target="_blank" rel="noopener" href="'+esc(c.file_url)+'">Ouvrir</a>':'')+'</div></article>';
+}
+function list(kind,filterSubj){
+  var a=items.filter(function(c){return c.kind===kind&&(!filterSubj||filterSubj==='all'||c.subject===filterSubj)});
+  return a.length?a.map(card).join(''):'<div class="empty">Rien pour le moment. Le contenu arrive bientôt.</div>';
+}
+function draw(){
+  var subs=['all'].concat(items.filter(function(c){return c.kind==='cours'&&c.subject}).map(function(c){return c.subject}).filter(function(v,i,a){return a.indexOf(v)===i}));
+  $('subj').innerHTML=subs.map(function(s){return '<button class="chip'+(s===subject?' on':'')+'" data-s="'+esc(s)+'">'+(s==='all'?'Toutes':esc(s))+'</button>'}).join('');
+  document.querySelectorAll('[data-s]').forEach(function(b){b.onclick=function(){subject=b.dataset.s;draw()}});
+  $('l-cours').innerHTML=list('cours',subject);$('l-oeuvre').innerHTML=list('oeuvre');$('l-resume').innerHTML=list('resume');
+  $('l-live').innerHTML=list('live');$('l-examen').innerHTML=list('examen');
+}
+document.querySelectorAll('[data-b]').forEach(function(c){c.onclick=function(){
+  document.querySelectorAll('[data-b]').forEach(function(x){x.classList.toggle('on',x===c)});
+  $('l-oeuvre').hidden=c.dataset.b!=='oeuvre';$('l-resume').hidden=c.dataset.b!=='resume';
+}});
+
+$('rgo').onclick=async function(){
+  var n=$('rnom').value.trim(),m=$('rmat').value.trim();
+  if(!n||!m){$('rres').innerHTML='<div class="msg">Entre ton nom et ton matricule.</div>';return}
+  var r=await SB.rpc('find_result',{p_name:n,p_matricule:m});
+  if(r.error){$('rres').innerHTML='<div class="msg">Erreur, réessaie.</div>';return}
+  $('rres').innerHTML=(r.data&&r.data.length)?r.data.map(function(x){
+    return '<div class="box" style="margin-top:12px"><span class="badge ok">'+esc(x.outcome||'Résultat')+'</span><br><b>'+esc(x.full_name)+'</b><div class="meta">'+(x.kind==='bac'?'Bac '+esc(x.year||''):'Bac blanc')+' · '+esc(x.detail||'')+'</div></div>'}).join('')
+    :'<div class="msg">Aucun résultat trouvé. Vérifie ton nom et ton matricule.</div>';
+};
+refresh();
+</script>
+</body>
+</html>
