@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Mon école</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#0a0820;color:#fff;font-family:system-ui,sans-serif;padding-bottom:40px}
+header{background:#1f3070;padding:14px 16px;display:flex;justify-content:space-between;font-weight:800}
+header a{color:#aeb4e0;font-weight:400}
+main{padding:16px;max-width:640px;margin:auto}
+.box{background:#1b1850;border:2px solid #2f4fd8;border-radius:18px;padding:14px;margin-bottom:14px}
+h2{font-size:18px;margin-bottom:10px}
+label{display:block;font-size:13px;color:#aeb4e0;margin:8px 0 4px}
+input,select,textarea{width:100%;background:#0e0c2b;border:1px solid #2a3a8f;border-radius:12px;color:#fff;font:inherit;padding:11px}
+input[type=checkbox]{width:auto}
+button{width:100%;border:0;border-radius:14px;background:#3b66e8;color:#fff;font:inherit;font-weight:800;padding:13px;margin-top:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #2a3a8f;font-size:14px}
+.row button{width:auto;background:#c0356b;padding:6px 12px;margin:0;font-size:12px}
+.msg{margin-top:8px;color:#ffc83d;font-size:14px}
+</style></head><body>
+<header><span>Admin · Mon école</span><a href="/">← Site</a></header>
+<main id="app"><div class="box">Chargement…</div></main>
+<script>
+var SB=supabase.createClient('https://ypnphytmszdnojcueayn.supabase.co','sb_publishable_IGnJBI14Af2HCKv3n-3chA_6omaX4Fi');
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+var KINDS={accueil:'Vidéo d’accueil',cours:'Cours (vidéo)',oeuvre:'Œuvre complète',resume:'Résumé / cours PDF',live:'Live',examen:'Bac blanc'};
+
+async function init(){
+  var s=(await SB.auth.getSession()).data.session;
+  if(!s){$('app').innerHTML='<div class="box">Connecte-toi d’abord sur le <a href="/" style="color:#9fc0ff">site</a>, puis reviens ici.</div>';return}
+  var p=(await SB.from('profiles').select('role').eq('id',s.user.id).single()).data;
+  if(!p||p.role!=='admin'){$('app').innerHTML='<div class="box">Accès réservé à l’admin.</div>';return}
+  render();loadList();
+}
+function render(){
+  var opts=Object.keys(KINDS).map(function(k){return '<option value="'+k+'">'+KINDS[k]+'</option>'}).join('');
+  $('app').innerHTML=
+  '<div class="box"><h2>Ajouter un contenu</h2>'+
+  '<label>Type</label><select id="kind">'+opts+'</select>'+
+  '<label>Matière (ex. Français, Philosophie, Histoire-Géo)</label><input id="subject">'+
+  '<label>Titre</label><input id="title">'+
+  '<label>Description</label><textarea id="desc" rows="3"></textarea>'+
+  '<label>Miniature (image)</label><input id="thumb" type="file" accept="image/*">'+
+  '<label>Lien de la vidéo ou du fichier</label><input id="url" placeholder="https://...">'+
+  '<label>Ou envoyer un fichier (PDF, vidéo)</label><input id="file" type="file">'+
+  '<label>Durée (minutes)</label><input id="dur" type="number">'+
+  '<label>Date et heure (pour les lives et bacs blancs)</label><input id="date" type="datetime-local">'+
+  '<label>Ordre d’affichage (0, 1, 2…)</label><input id="pos" type="number" value="0">'+
+  '<label>Offre</label><select id="offer"><option value="cours">Cours obligatoires</option><option value="complet">Plateforme complète</option></select>'+
+  '<label><input id="free" type="checkbox"> Gratuit</label>'+
+  '<button id="add">Ajouter</button><div class="msg" id="msg"></div></div>'+
+  '<div class="box"><h2>Contenus ajoutés</h2><div id="list"></div></div>'+
+  '<div class="box"><h2>Ajouter un résultat</h2>'+
+  '<label>Type</label><select id="rkind"><option value="bac">Vrai résultat du bac</option><option value="bac_blanc">Bac blanc</option></select>'+
+  '<label>Année</label><input id="ryear" type="number" value="2026">'+
+  '<label>Nom complet</label><input id="rname">'+
+  '<label>Matricule</label><input id="rmat">'+
+  '<label>Résultat (ex. Admis, Ajourné)</label><input id="rout">'+
+  '<label>Détail (ex. Mention Bien, note)</label><input id="rdet">'+
+  '<button id="radd">Ajouter le résultat</button><div class="msg" id="rmsg"></div></div>';
+  $('add').onclick=addContent;$('radd').onclick=addResult;
+}
+async function up(file,folder){
+  var n=folder+'/'+Date.now()+'-'+file.name.toLowerCase().replace(/[^a-z0-9.]+/g,'-');
+  var r=await SB.storage.from('media').upload(n,file);
+  if(r.error)throw r.error;
+  return SB.storage.from('media').getPublicUrl(n).data.publicUrl;
+}
+async function addContent(){
+  var m=$('msg');m.textContent='Envoi en cours…';
+  try{
+    var row={serie:'A4',kind:$('kind').value,subject:$('subject').value.trim()||null,title:$('title').value.trim(),
+      description:$('desc').value.trim()||null,duration_min:+$('dur').value||null,
+      starts_at:$('date').value?new Date($('date').value).toISOString():null,
+      is_free:$('free').checked,offer:$('offer').value,file_url:$('url').value.trim()||null,position:+$('pos').value||0};
+    if(!row.title){m.textContent='Le titre est obligatoire.';return}
+    var th=$('thumb').files[0],fl=$('file').files[0];
+    if(th)row.thumbnail_url=await up(th,'thumbs');
+    if(fl)row.file_url=await up(fl,'files');
+    var r=await SB.from('contents').insert(row);
+    if(r.error)throw r.error;
+    m.textContent='Ajouté ✔';loadList();
+  }catch(e){m.textContent='Erreur : '+e.message}
+}
+async function loadList(){
+  var r=await SB.from('contents').select('id,kind,title').order('created_at',{ascending:false});
+  var d=r.data||[];
+  $('list').innerHTML=d.length?d.map(function(c){return '<div class="row"><span>'+esc(KINDS[c.kind])+' · '+esc(c.title)+'</span><button data-id="'+c.id+'">Supprimer</button></div>'}).join(''):'<div class="row">Aucun contenu.</div>';
+  document.querySelectorAll('[data-id]').forEach(function(b){b.onclick=async function(){
+    if(confirm('Supprimer ?')){await SB.from('contents').delete().eq('id',b.dataset.id);loadList()}}});
+}
+async function addResult(){
+  var m=$('rmsg');
+  var row={kind:$('rkind').value,year:+$('ryear').value||null,full_name:$('rname').value.trim(),matricule:$('rmat').value.trim(),outcome:$('rout').value.trim()||null,detail:$('rdet').value.trim()||null};
+  if(!row.full_name||!row.matricule){m.textContent='Nom et matricule obligatoires.';return}
+  var r=await SB.from('results').insert(row);
+  m.textContent=r.error?'Erreur : '+r.error.message:'Résultat ajouté ✔';
+  if(!r.error){$('rname').value='';$('rmat').value='';$('rout').value='';$('rdet').value=''}
+}
+init();
+</script></body></html>
