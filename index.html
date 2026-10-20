@@ -40,6 +40,8 @@ h2{font-size:22px;font-weight:800;margin:6px 0 14px}
 input{width:100%;background:#0e0c2b;border:1px solid #2a3a8f;border-radius:14px;color:#fff;font:inherit;padding:13px;margin-bottom:10px}
 .msg{margin-top:10px;font-size:14px;color:#ffc83d}
 .empty{color:var(--mut);text-align:center;padding:30px 10px}
+.video{margin:16px 0;border-radius:26px;padding:3px;background:linear-gradient(135deg,var(--blue),#c0356b)}
+.video video{display:block;width:100%;border-radius:24px;background:#000;aspect-ratio:16/10}
 nav{position:fixed;left:0;right:0;bottom:0;background:#100e30;border-top:2px solid var(--blue);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px))}
 nav button{flex:1;background:none;border:0;color:var(--mut);font:inherit;font-size:11px;padding:6px 2px;display:grid;gap:2px;justify-items:center}
 nav button span{font-size:20px}nav button.on{color:#fff}
@@ -53,6 +55,7 @@ nav button span{font-size:20px}nav button.on{color:#fff}
 <div class="series"><div class="s act"><b>Série A4</b><span>Lettres</span></div><div class="s"><b>Série D</b><span>Bientôt</span></div></div>
 <h1>Prépare ton Bac A4 avec des cours qui te parlent</h1>
 <p class="sub">Des vidéos simples, des méthodes pas à pas et des sujets corrigés. À ton rythme.</p>
+<div id="intro"></div>
 <div id="authbox" class="box">
   <div class="tabs"><button class="chip on" id="tlogin">Connexion</button><button class="chip" id="tsignup">Créer un compte</button></div>
   <input id="fname" placeholder="Nom complet" autocomplete="name" hidden>
@@ -61,7 +64,8 @@ nav button span{font-size:20px}nav button.on{color:#fff}
   <button class="btn" id="go">Se connecter</button>
   <div class="msg" id="amsg"></div>
 </div>
-<div id="welcome" class="box" hidden><h3 id="wname"></h3><p class="meta">Tu es connecté. Choisis une rubrique en bas.</p></div>
+<div id="welcome" class="box" hidden><h3 id="wname"></h3><p class="meta">Tu es connecté. Choisis une rubrique en bas.</p>
+<a id="adminbtn" class="btn" href="/admin.html" hidden>⚙️ Espace admin</a></div>
 </section>
 
 <section id="cours"><h2>Cours essentiels</h2><div class="tabs" id="subj"></div><div id="l-cours"></div></section>
@@ -124,10 +128,12 @@ async function refresh(){
   var s=(await SB.auth.getSession()).data.session;
   user=s?s.user:null;profile=null;
   if(user){var r=await SB.from('profiles').select('*').eq('id',user.id).single();profile=r.data}
-  $('authbox').hidden=!!user;$('welcome').hidden=!user;
+  var isAdmin=!!(profile&&profile.role==='admin');
+  $('authbox').hidden=!!user;$('welcome').hidden=!user;$('adminbtn').hidden=!isAdmin;
   $('who').innerHTML=user?esc(profile&&profile.full_name||user.email)+'<br><button id="out">Déconnexion</button>':'Bac A4';
-  if(user){$('wname').textContent='Bienvenue '+(profile&&profile.full_name||'')+(profile&&profile.role==='admin'?' (admin)':'');
-    $('out').onclick=function(){SB.auth.signOut()};await load()}
+  if(user){$('wname').textContent='Bienvenue '+(profile&&profile.full_name||'')+(isAdmin?' (admin)':'');
+    $('out').onclick=function(){SB.auth.signOut()}}
+  await load();
 }
 SB.auth.onAuthStateChange(function(){refresh()});
 
@@ -146,6 +152,8 @@ function list(kind,filterSubj){
   return a.length?a.map(card).join(''):'<div class="empty">Rien pour le moment. Le contenu arrive bientôt.</div>';
 }
 function draw(){
+  var intro=items.filter(function(c){return c.kind==='accueil'&&c.file_url})[0];
+  $('intro').innerHTML=intro?'<div class="video"><video controls playsinline preload="metadata" controlsList="nodownload" disablepictureinpicture oncontextmenu="return false" '+(intro.thumbnail_url?'poster="'+esc(intro.thumbnail_url)+'" ':'')+'src="'+esc(intro.file_url)+'"></video></div>':'';
   var subs=['all'].concat(items.filter(function(c){return c.kind==='cours'&&c.subject}).map(function(c){return c.subject}).filter(function(v,i,a){return a.indexOf(v)===i}));
   $('subj').innerHTML=subs.map(function(s){return '<button class="chip'+(s===subject?' on':'')+'" data-s="'+esc(s)+'">'+(s==='all'?'Toutes':esc(s))+'</button>'}).join('');
   document.querySelectorAll('[data-s]').forEach(function(b){b.onclick=function(){subject=b.dataset.s;draw()}});
