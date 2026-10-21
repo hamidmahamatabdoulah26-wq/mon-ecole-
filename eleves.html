@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Élèves · Mon école</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#0a0820;color:#fff;font-family:system-ui,sans-serif;padding-bottom:40px}
+header{background:#1f3070;padding:14px 16px;display:flex;justify-content:space-between;font-weight:800}
+header a{color:#aeb4e0;font-weight:400}
+main{padding:16px;max-width:640px;margin:auto}
+input{width:100%;background:#0e0c2b;border:1px solid #2a3a8f;border-radius:12px;color:#fff;font:inherit;padding:12px;margin-bottom:12px}
+.card{background:#1b1850;border:2px solid #2f4fd8;border-radius:18px;padding:14px;margin-bottom:12px}
+.st{color:#aeb4e0;font-size:13px;margin:4px 0 8px}
+.ok{color:#4ade80}.no{color:#ffc83d}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{border:0;border-radius:12px;background:#3b66e8;color:#fff;font:inherit;font-weight:700;padding:11px}
+button.c{background:#1f9d78}button.d{background:#c0356b;grid-column:1/3}
+</style></head><body>
+<header><span>Élèves</span><a href="/">← Site</a></header>
+<main id="app"><div class="card">Chargement…</div></main>
+<script>
+var SB=supabase.createClient('https://ypnphytmszdnojcueayn.supabase.co','sb_publishable_IGnJBI14Af2HCKv3n-3chA_6omaX4Fi');
+var $=function(i){return document.getElementById(i)};
+var all=[];
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+async function init(){
+  var s=(await SB.auth.getSession()).data.session;
+  if(!s){$('app').innerHTML='<div class="card">Connecte-toi d’abord sur le <a href="/" style="color:#9fc0ff">site</a>.</div>';return}
+  var p=(await SB.from('profiles').select('role').eq('id',s.user.id).single()).data;
+  if(!p||p.role!=='admin'){$('app').innerHTML='<div class="card">Accès réservé à l’admin.</div>';return}
+  $('app').innerHTML='<input id="q" placeholder="Chercher un nom ou un matricule"><div id="list"></div>';
+  $('q').oninput=draw;load();
+}
+async function load(){
+  var r=await SB.from('profiles').select('id,full_name,matricule,offer,expires_at,role').order('full_name');
+  all=(r.data||[]).filter(function(x){return x.role==='eleve'});draw();
+}
+function draw(){
+  var q=$('q').value.trim().toLowerCase(),t=new Date().toISOString().slice(0,10);
+  var a=all.filter(function(x){return !q||(x.full_name||'').toLowerCase().indexOf(q)>-1||(x.matricule||'').toLowerCase().indexOf(q)>-1});
+  $('list').innerHTML=a.length?a.map(function(x){
+    var on=x.offer&&x.expires_at&&x.expires_at>=t;
+    return '<div class="card"><b>'+esc(x.full_name||'Sans nom')+'</b><div class="st">Matricule : '+esc(x.matricule||'—')+'</div><div class="st '+(on?'ok':'no')+'">'+(on?'Actif : '+(x.offer==='complet'?'Plateforme complète':'Cours obligatoires')+' jusqu’au '+new Date(x.expires_at).toLocaleDateString('fr-FR'):'Pas d’abonnement actif')+'</div>'+
+    '<div class="btns"><button data-u="'+x.id+'" data-o="cours">Cours +30 j</button><button class="c" data-u="'+x.id+'" data-o="complet">Complet +30 j</button><button class="d" data-u="'+x.id+'" data-o="">Désactiver</button></div></div>'}).join(''):'<div class="card">Aucun élève.</div>';
+  document.querySelectorAll('[data-u]').forEach(function(b){b.onclick=async function(){
+    var o=b.dataset.o||null;
+    var r=await SB.rpc('admin_activate',{p_user:b.dataset.u,p_offer:o,p_days:30});
+    if(r.error)alert('Erreur : '+r.error.message);else load();
+  }});
+}
+init();
+</script></body></html>
