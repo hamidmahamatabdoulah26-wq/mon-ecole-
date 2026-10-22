@@ -19,6 +19,7 @@ main{padding:16px;max-width:640px;margin:auto}
 section{display:none}section.on{display:block}
 h1{font-size:30px;line-height:1.15;font-weight:800;text-align:center;margin:22px 0 10px}
 h2{font-size:22px;font-weight:800;margin:6px 0 14px}
+h3{font-size:17px;margin-bottom:8px}
 .sub{color:var(--mut);text-align:center;margin-bottom:18px}
 .series{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .s{border:2px solid #2a3a8f;border-radius:20px;padding:14px;background:#120f33}
@@ -35,12 +36,19 @@ h2{font-size:22px;font-weight:800;margin:6px 0 14px}
 .meta{margin:6px 0}
 .btn{display:block;width:100%;border:0;border-radius:16px;background:var(--blue);color:#fff;font:inherit;font-weight:800;padding:13px;margin-top:8px;text-align:center;text-decoration:none}
 .btn.alt{background:#1b2466;border:1px solid #2a3a8f;font-weight:600}
+.btn.red{background:#c0356b}.btn.grn{background:#1f9d78}
 .box{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;margin-bottom:12px}
 .badge{display:inline-block;background:#c0356b;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:800;margin-bottom:6px}
 .badge.ok{background:#1f9d78}
-input{width:100%;background:#0e0c2b;border:1px solid #2a3a8f;border-radius:14px;color:#fff;font:inherit;padding:13px;margin-bottom:10px}
+input,select,textarea{width:100%;background:#0e0c2b;border:1px solid #2a3a8f;border-radius:14px;color:#fff;font:inherit;padding:13px;margin-bottom:10px}
+input[type=checkbox]{width:auto;margin-right:8px}
+label{display:block;font-size:13px;color:var(--mut);margin:6px 0 4px}
 .msg{margin-top:10px;font-size:14px;color:#ffc83d}
 .empty{color:var(--mut);text-align:center;padding:30px 10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #2a3a8f;font-size:14px}
+.row .btn{width:auto;margin:0;padding:8px 12px;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ok-t{color:#4ade80;font-size:13px}.no-t{color:#ffc83d;font-size:13px}
 .video{margin:16px 0;border-radius:26px;padding:3px;background:linear-gradient(135deg,var(--blue),#c0356b)}
 .video video{display:block;width:100%;border-radius:24px;background:#000;aspect-ratio:16/10}
 nav{position:fixed;left:0;right:0;bottom:0;background:#100e30;border-top:2px solid var(--blue);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px))}
@@ -66,8 +74,8 @@ nav button span{font-size:20px}nav button.on{color:#fff}
   <div class="msg" id="amsg"></div>
 </div>
 <div id="welcome" class="box" hidden><h3 id="wname"></h3><p class="meta" id="wstatus"></p>
-<a id="adminbtn" class="btn" href="/admin.html" hidden>⚙️ Espace admin</a>
-<a id="elevesbtn" class="btn alt" href="/eleves.html" hidden>👥 Gérer les élèves</a></div>
+<button id="adminbtn" class="btn" data-go="admin" hidden>⚙️ Espace admin</button>
+<button id="elevesbtn" class="btn alt" data-go="eleves" hidden>👥 Gérer les élèves</button></div>
 </section>
 
 <section id="cours"><h2>Cours essentiels</h2><div class="tabs" id="subj"></div><div id="l-cours"></div></section>
@@ -88,6 +96,42 @@ nav button span{font-size:20px}nav button.on{color:#fff}
 <div id="rres"></div>
 </div></section>
 
+<section id="admin">
+<button class="btn alt" data-go="accueil">← Retour</button>
+<h2 style="margin-top:14px">Espace admin</h2>
+<div class="box"><h3>Ajouter un contenu</h3>
+<label>Type</label>
+<select id="a_kind"><option value="accueil">Vidéo d’accueil</option><option value="cours" selected>Cours (vidéo)</option><option value="oeuvre">Œuvre complète</option><option value="resume">Résumé / cours PDF</option><option value="live">Live</option><option value="examen">Bac blanc</option></select>
+<label>Matière (ex. Français, Philosophie, Histoire-Géo)</label><input id="a_subject">
+<label>Titre</label><input id="a_title">
+<label>Description</label><textarea id="a_desc" rows="3"></textarea>
+<label>Miniature (image)</label><input id="a_thumb" type="file" accept="image/*">
+<label>Fichier à envoyer (PDF, vidéo)</label><input id="a_file" type="file">
+<label>Ou un lien (si pas de fichier)</label><input id="a_url" placeholder="https://...">
+<label>Durée (minutes)</label><input id="a_dur" type="number">
+<label>Date et heure (lives et bacs blancs)</label><input id="a_date" type="datetime-local">
+<label>Ordre d’affichage (0, 1, 2…)</label><input id="a_pos" type="number" value="0">
+<label>Offre</label><select id="a_offer"><option value="cours">Cours obligatoires</option><option value="complet">Plateforme complète</option></select>
+<label><input id="a_free" type="checkbox">Gratuit pour tous</label>
+<button class="btn" id="a_add">Ajouter</button><div class="msg" id="a_msg"></div></div>
+<div class="box"><h3>Contenus ajoutés</h3><div id="a_list"></div></div>
+<div class="box"><h3>Ajouter un résultat</h3>
+<label>Type</label><select id="r_kind"><option value="bac">Vrai résultat du bac</option><option value="bac_blanc">Bac blanc</option></select>
+<label>Année</label><input id="r_year" type="number" value="2026">
+<label>Nom complet</label><input id="r_name">
+<label>Matricule</label><input id="r_mat">
+<label>Résultat (ex. Admis, Ajourné)</label><input id="r_out">
+<label>Détail (ex. Mention Bien)</label><input id="r_det">
+<button class="btn" id="r_add">Ajouter le résultat</button><div class="msg" id="r_msg"></div></div>
+</section>
+
+<section id="eleves">
+<button class="btn alt" data-go="accueil">← Retour</button>
+<h2 style="margin-top:14px">Élèves</h2>
+<input id="e_q" placeholder="Chercher un nom ou un matricule">
+<div id="e_list"></div>
+</section>
+
 </main>
 <nav>
 <button class="on" data-go="accueil"><span>🏠</span>Accueil</button>
@@ -100,8 +144,9 @@ nav button span{font-size:20px}nav button.on{color:#fff}
 <script>
 var SB=supabase.createClient('https://ypnphytmszdnojcueayn.supabase.co','sb_publishable_IGnJBI14Af2HCKv3n-3chA_6omaX4Fi');
 var $=function(i){return document.getElementById(i)};
-var user=null,profile=null,isAdmin=false,items=[],mode='login',subject='all',introId=null;
+var user=null,profile=null,isAdmin=false,items=[],mode='login',subject='all',introId=null,students=[];
 var COLS='id,serie,kind,subject,title,description,thumbnail_url,duration_min,starts_at,is_free,offer,position,created_at';
+var KINDS={accueil:'Vidéo d’accueil',cours:'Cours',oeuvre:'Œuvre',resume:'Résumé/PDF',live:'Live',examen:'Bac blanc'};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function today(){return new Date().toISOString().slice(0,10)}
 function active(){return !!(profile&&profile.expires_at&&profile.expires_at>=today()&&profile.offer)}
@@ -109,8 +154,10 @@ function access(c){return c.is_free||isAdmin||(active()&&(profile.offer==='compl
 
 function go(id){
   if(!user&&id!=='accueil'&&id!=='resultats'){id='accueil';$('amsg').textContent='Connecte-toi pour voir le contenu.'}
+  if((id==='admin'||id==='eleves')&&!isAdmin)id='accueil';
   document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===id)});
   document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.go===id)});
+  if(id==='eleves')loadStudents();
   window.scrollTo(0,0);
 }
 document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){go(b.dataset.go)}});
@@ -178,6 +225,7 @@ function draw(){
   document.querySelectorAll('[data-s]').forEach(function(b){b.onclick=function(){subject=b.dataset.s;draw()}});
   $('l-cours').innerHTML=list('cours',subject);$('l-oeuvre').innerHTML=list('oeuvre');$('l-resume').innerHTML=list('resume');
   $('l-live').innerHTML=list('live');$('l-examen').innerHTML=list('examen');
+  adminList();
 }
 document.addEventListener('click',async function(e){
   var b=e.target.closest('[data-open]');if(!b)return;
@@ -200,6 +248,69 @@ $('rgo').onclick=async function(){
     return '<div class="box" style="margin-top:12px"><span class="badge ok">'+esc(x.outcome||'Résultat')+'</span><br><b>'+esc(x.full_name)+'</b><div class="meta">'+(x.kind==='bac'?'Bac '+esc(x.year||''):'Bac blanc')+' · '+esc(x.detail||'')+'</div></div>'}).join('')
     :'<div class="msg">Aucun résultat trouvé. Vérifie ton nom et ton matricule.</div>';
 };
+
+/* ---------- ADMIN ---------- */
+async function up(file,folder){
+  var n=folder+'/'+Date.now()+'-'+file.name.toLowerCase().replace(/[^a-z0-9.]+/g,'-');
+  var r=await SB.storage.from('media').upload(n,file);
+  if(r.error)throw r.error;
+  return SB.storage.from('media').getPublicUrl(n).data.publicUrl;
+}
+$('a_add').onclick=async function(){
+  var m=$('a_msg');
+  try{
+    var title=$('a_title').value.trim();
+    if(!title){m.textContent='Le titre est obligatoire.';return}
+    m.textContent='Envoi en cours, patiente…';
+    var row={serie:'A4',kind:$('a_kind').value,subject:$('a_subject').value.trim()||null,title:title,
+      description:$('a_desc').value.trim()||null,duration_min:+$('a_dur').value||null,
+      starts_at:$('a_date').value?new Date($('a_date').value).toISOString():null,
+      is_free:$('a_free').checked,offer:$('a_offer').value,file_url:$('a_url').value.trim()||null,position:+$('a_pos').value||0};
+    var th=$('a_thumb').files[0],fl=$('a_file').files[0];
+    if(th)row.thumbnail_url=await up(th,'thumbs');
+    if(fl)row.file_url=await up(fl,'files');
+    var r=await SB.from('contents').insert(row);
+    if(r.error)throw r.error;
+    m.textContent='Ajouté ✔';
+    ['a_title','a_desc','a_url','a_dur','a_date'].forEach(function(i){$(i).value=''});
+    $('a_thumb').value='';$('a_file').value='';
+    load();
+  }catch(e){m.textContent='Erreur : '+(e.message||e)}
+};
+function adminList(){
+  if(!isAdmin){$('a_list').innerHTML='';return}
+  $('a_list').innerHTML=items.length?items.map(function(c){return '<div class="row"><span>'+esc(KINDS[c.kind]||c.kind)+' · '+esc(c.title)+'</span><button class="btn red" data-del="'+c.id+'">Supprimer</button></div>'}).join(''):'<div class="row">Aucun contenu.</div>';
+  document.querySelectorAll('[data-del]').forEach(function(b){b.onclick=async function(){
+    if(confirm('Supprimer ?')){await SB.from('contents').delete().eq('id',b.dataset.del);load()}}});
+}
+$('r_add').onclick=async function(){
+  var m=$('r_msg');
+  var row={kind:$('r_kind').value,year:+$('r_year').value||null,full_name:$('r_name').value.trim(),matricule:$('r_mat').value.trim(),outcome:$('r_out').value.trim()||null,detail:$('r_det').value.trim()||null};
+  if(!row.full_name||!row.matricule){m.textContent='Nom et matricule obligatoires.';return}
+  var r=await SB.from('results').insert(row);
+  m.textContent=r.error?'Erreur : '+r.error.message:'Résultat ajouté ✔';
+  if(!r.error){['r_name','r_mat','r_out','r_det'].forEach(function(i){$(i).value=''})}
+};
+
+/* ---------- ÉLÈVES ---------- */
+async function loadStudents(){
+  var r=await SB.from('profiles').select('id,full_name,matricule,offer,expires_at,role').order('full_name');
+  students=(r.data||[]).filter(function(x){return x.role==='eleve'});drawStudents();
+}
+function drawStudents(){
+  var q=$('e_q').value.trim().toLowerCase(),t=today();
+  var a=students.filter(function(x){return !q||(x.full_name||'').toLowerCase().indexOf(q)>-1||(x.matricule||'').toLowerCase().indexOf(q)>-1});
+  $('e_list').innerHTML=a.length?a.map(function(x){
+    var on=x.offer&&x.expires_at&&x.expires_at>=t;
+    return '<div class="box"><b>'+esc(x.full_name||'Sans nom')+'</b><div class="meta">Matricule : '+esc(x.matricule||'—')+'</div><div class="'+(on?'ok-t':'no-t')+'">'+(on?'Actif : '+(x.offer==='complet'?'Plateforme complète':'Cours obligatoires')+' jusqu’au '+new Date(x.expires_at).toLocaleDateString('fr-FR'):'Pas d’abonnement actif')+'</div>'+
+    '<div class="grid2"><button class="btn" data-u="'+x.id+'" data-o="cours">Cours +30 j</button><button class="btn grn" data-u="'+x.id+'" data-o="complet">Complet +30 j</button></div><button class="btn red" data-u="'+x.id+'" data-o="">Désactiver</button></div>'}).join(''):'<div class="empty">Aucun élève.</div>';
+  document.querySelectorAll('[data-u]').forEach(function(b){b.onclick=async function(){
+    var r=await SB.rpc('admin_activate',{p_user:b.dataset.u,p_offer:b.dataset.o||null,p_days:30});
+    if(r.error)alert('Erreur : '+r.error.message);else loadStudents();
+  }});
+}
+$('e_q').oninput=drawStudents;
+
 refresh();
 </script>
 </body>
