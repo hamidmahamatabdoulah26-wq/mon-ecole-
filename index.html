@@ -312,6 +312,30 @@ function drawStudents(){
 $('e_q').oninput=drawStudents;
 
 refresh();
+  /* ---------- DOSSIERS PAR MATIÈRE ---------- */
+document.head.insertAdjacentHTML('beforeend','<style>.fold{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:8px;text-align:center}.fth{aspect-ratio:3/4;border-radius:14px;background:linear-gradient(#3b66e8,#1f3a9c) center/cover;margin-bottom:8px}.fold b{display:block;font-size:15px}.fold small{color:var(--mut);font-size:12px}</style>');
+var openF={};
+function list(kind){
+ var a=items.filter(function(c){return c.kind===kind});
+ if(kind==='cours')$('subj').hidden=true;
+ if(!a.length)return '<p class="empty">Rien pour le moment. Le contenu arrive bientôt.</p>';
+ var f=openF[kind];
+ if(f!=null){
+  var b=a.filter(function(c){return (c.subject||'Autres')===f});
+  return '<button class="btn alt" data-back="'+kind+'">← Toutes les matières</button><h3 style="margin:14px 0 10px">'+esc(f)+'</h3>'+b.map(card).join('');
+ }
+ var g={};a.forEach(function(c){var s=c.subject||'Autres';(g[s]=g[s]||[]).push(c)});
+ return '<div class="grid2">'+Object.keys(g).map(function(s){
+  var t=g[s].filter(function(c){return c.thumbnail_url})[0];
+  var bg=t?'background-image:url(\''+esc(t.thumbnail_url)+'\')':'';
+  return '<div class="fold" data-f="'+esc(s)+'" data-k="'+kind+'"><div class="fth" style="'+bg+'"></div><b>'+esc(s)+'</b><small>'+g[s].length+' fichier'+(g[s].length>1?'s':'')+'</small></div>';
+ }).join('')+'</div>';
+}
+document.addEventListener('click',function(e){
+ var f=e.target.closest('[data-f]'),b=e.target.closest('[data-back]');
+ if(f){openF[f.dataset.k]=f.dataset.f;draw();window.scrollTo(0,0)}
+ if(b){delete openF[b.dataset.back];draw()}
+});
 </script>
 </body>
 </html>
